@@ -3,6 +3,8 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import prompts from 'prompts';
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const readmeTemplatePath = path.resolve(__dirname, '../templates', 'README.md');
 const createProject = async () => {
     const { projectName } = await prompts({
         type: 'text',
@@ -39,7 +41,6 @@ const createProject = async () => {
         }
         console.log(`stdout: ${stdout}`);
     });
-    const readmeTemplatePath = path.join(process.cwd(), 'templates', 'README.md');
     const projectReadmePath = path.join(projectDir, 'README.md');
     fs.copyFileSync(readmeTemplatePath, projectReadmePath);
 };
