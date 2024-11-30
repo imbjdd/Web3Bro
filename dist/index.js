@@ -1,41 +1,48 @@
 #!/usr/bin/env node
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import prompts from 'prompts';
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { framework } = yield prompts({
-            type: 'select',
-            name: 'framework',
-            message: 'Quel framework CSS voulez-vous utiliser ?',
-            choices: [
-                { title: 'Tailwind CSS', value: 'tailwind' },
-                { title: 'Bootstrap', value: 'bootstrap' },
-                { title: 'None', value: 'none' },
-            ],
-            initial: 0,
-        });
-        console.log(`Vous avez choisi : ${framework}`);
-        switch (framework) {
-            case 'tailwind':
-                console.log('Vous avez sélectionné Tailwind CSS.');
-                break;
-            case 'bootstrap':
-                console.log('Vous avez sélectionné Bootstrap.');
-                break;
-            case 'none':
-                console.log('Vous avez choisi aucun framework CSS.');
-                break;
-            default:
-                console.log('Choix invalide.');
-        }
+const createProject = async () => {
+    const { projectName } = await prompts({
+        type: 'text',
+        name: 'projectName',
+        message: 'Quel est le nom du projet ?',
+        initial: 'my-web3-project'
     });
-}
-main();
+    const projectDir = path.join(process.cwd(), projectName);
+    if (fs.existsSync(projectDir)) {
+        console.log('Le dossier existe déjà.');
+        return;
+    }
+    fs.mkdirSync(projectDir);
+    exec(`git init`, { cwd: projectDir }, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Erreur lors de l'initialisation de git: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    });
+    const createNextAppCmd = `npx create-next-app frontend --use-npm --yes`;
+    exec(createNextAppCmd, { cwd: projectDir }, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Erreur lors de la création du projet Next.js: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    });
+    const readmeTemplatePath = path.join(process.cwd(), 'templates', 'README.md');
+    const projectReadmePath = path.join(projectDir, 'README.md');
+    fs.copyFileSync(readmeTemplatePath, projectReadmePath);
+};
+createProject().catch((err) => {
+    console.error('Erreur:', err);
+});
